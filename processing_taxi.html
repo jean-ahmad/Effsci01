@@ -1,0 +1,825 @@
+<!--<!DOCTYPE html>-->
+
+<html lang="fr">
+
+  <head>
+    <title>Programmation en Processing</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" media="screen" type="text/css" title="Design" href="design.css" />
+  </head>
+
+  <body>
+    
+    <div class="contenu"><!-- onCopy="return false;" onpaste="return false;">-->
+      
+      <!--             Titre                -->
+      <div class="gros_titre">
+	<h1>Programmation en Processing: Jeu vidéo Taxi</h1>
+	<img style="max-width: 15vw;" src="images/pde-1024.png" alt="">
+	
+	<!--             Navigation                -->
+	<div class="navigation">
+	</div>
+      </div>
+      
+      <!--             Questions               -->
+      <div class="justifie">
+
+
+	<h2>Présentation</h2>
+	
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>Nous allons maintenant utilisé nos nouvelles connaissances en programmation pour développer un jeu vidéo.
+	      Il est assez simple, mais garantira des sensations fortes aux joueurs ;-)</p>
+
+	    
+	      
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 30vw;" src="images/taxi_1.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>Le joueur, un conducteur de taxi, a pour objectif de faire traverser une avenue à quatre voies, en évitant le
+	      trafic, à des passagers.</p>
+	    <p>Quand le taxi est vide son panneau de toit est vert, et il faut attendre qu'un passager monte, le panneau
+	      de toit devient rouge, pour l'emmener sur l'autre rive. Cela fait gagner un point au score.</p>
+	    <p>Mais attention, il faut éviter les voitures qui circulent sur l'avenue. En cas d'accident, le joueur
+	      perd une vie.</p>
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 30vw;" src="images/taxi_2.jpg" alt=""><br/>Interface du jeu<br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<h2>Le code du jeu</h2>
+
+	<p>Le code du jeu, ci-dessous, se compose de quatre parties:</p>
+
+	<ul>
+	  <li>Des déclarations et initialisations de variables globales (utilisées à travers tout le code).</li>
+	  <li>Les fonctions <span class="code_dans_texte">setup()</span> et <span class="code_dans_texte">draw()</span>.
+	    Seul la fonction <span class="code_dans_texte">setup()</span> devra être complétée.</li>
+	  <li>Des fonctions de gestion du jeu. Ces fonctions ne devront pas, dans un premier temps, être modifiées sous
+	    peine de risquer d'engendrer des bogues.</li>
+	  <li>Des fonctions permettant de dessiner les différents éléments du jeu. Ces fonctions devront être complétées
+	    pour rendre le jeu opérationnel.</li>
+	</ul>
+
+	<p><b>Copiez</b> le code, ci-dessous, dans l'environnement de développement intégré, et <b>sauvegardez-le</b>
+	  dans votre clé USB ou, à défaut, sur votre espace de travail.</p>
+
+	<div class="code">
+	  //**************************************************************************************************<br/>
+	  // VARIABLES GLOBALES<br/><br/>
+
+	  Boolean game_over = false;<br/><br/>
+
+	  int position_taxi = 1;<br/>
+	  Boolean taxi_complet = false;<br/><br/>
+
+	  Boolean accident = false;<br/>
+	  int affiche_accident_compteur = 0;<br/><br/>
+
+	  int vies = 3;<br/>
+	  int score = 0;<br/><br/>
+
+	  Boolean passager_a_gauche = true;<br/><br/>
+
+	  int[][] config_trafic = <br/>
+	  { {0, 0, 0, 0}, <br/>
+	  {0, 0, 0, 0}, <br/>
+	  {0, 0, 0, 0}, <br/>
+	  {0, 0, 0, 0}, <br/>
+	  {0, 0, 0, 0}, <br/>
+	  {0, 0, 0, 0} };<br/><br/>
+
+	  //**************************************************************************************************<br/>
+	  // FONCTIONS SETUP ET DRAW<br/><br/>
+
+	  void setup()<br/>
+	  {<br/>
+	  size(800, 800);<br/><br/>
+
+	  background(255, 255, 255);<br/><br/>
+
+	  // Dessin des éléments fixes<br/><br/>
+
+	  // A compléter<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void draw()<br/>
+	  {<br/>
+	  if ((frameCount % 15 == 0) && (!accident)) {<br/>
+	  thread("calculTrafic");<br/>
+	  }<br/><br/>
+
+	  if ((frameCount % 50 == 0) && (!accident)) {<br/>
+	  thread("gestionPassager");<br/>
+	  }<br/><br/>
+
+	  effacerTout();<br/><br/>
+
+	  if (!game_over)<br/>
+	  {<br/>
+	  dessinerTrafic();<br/>
+	  gestionAccident();<br/>
+	  if (accident) dessinerAccident();<br/>
+	  dessinerTaxi(colonneEnPosX(position_taxi), ligneEnPosY(6), false);<br/>
+	  dessinerScore();<br/>
+	  dessinerVies();<br/>
+	  dessinerPersonneSurRive();<br/>
+	  } else<br/>
+	  {<br/>
+	  effacerTout();<br/>
+	  effacerTout();<br/>
+	  effacerTout();<br/>
+	  effacerTout();<br/>
+	  dessinerScore();<br/>
+	  dessinerVies();<br/>
+	  dessinerGameOver();<br/>
+	  noLoop();<br/>
+	  }<br/>
+	  }<br/><br/>
+
+	  //**************************************************************************************************<br/>
+	  // FONCTIONS DE GESTION<br/><br/>
+
+	  void gestionAccident()<br/>
+	  {<br/>
+	  if ((position_taxi &gt; 1) && (position_taxi &lt; 6))<br/>
+	  if (config_trafic[5][position_taxi - 2] == 1) <br/>
+	  {<br/>
+	  accident = true;<br/>
+	  position_taxi = 1;<br/>
+	  passager_a_gauche = true;<br/>
+	  taxi_complet = false;<br/>
+	  vies--;<br/>
+	  if (vies == 0) game_over = true;<br/>
+	  }<br/>
+	  if (accident && (affiche_accident_compteur &lt; 100))<br/>
+	  {<br/>
+	  affiche_accident_compteur++;<br/>
+	  if (affiche_accident_compteur == 100)<br/>
+	  {<br/>
+	  accident = false;<br/>
+	  affiche_accident_compteur = 0;<br/>
+	  }<br/>
+	  }<br/>
+	  }<br/><br/>
+	  
+	  void gestionPassager()<br/>
+	  {<br/>
+	  if (!taxi_complet)<br/>
+	  {<br/>
+	  if (passager_a_gauche && (position_taxi == 1))<br/>
+	  {<br/>
+	  taxi_complet = true;<br/>
+	  } else if (!passager_a_gauche && (position_taxi == 6))<br/>
+	  {<br/>
+	  taxi_complet = true;<br/>
+	  }<br/>
+	  } else if (taxi_complet && passager_a_gauche && (position_taxi == 6))<br/>
+	  {<br/>
+	  taxi_complet = false;<br/>
+	  score++;<br/>
+	  passager_a_gauche = false;<br/>
+	  } else if (taxi_complet && !passager_a_gauche && (position_taxi == 1))<br/>
+	  {<br/>
+	  taxi_complet = false;<br/>
+	  score++;<br/>
+	  passager_a_gauche = true;<br/>
+	  }<br/>
+	  }<br/><br/>
+	  
+	  void calculTrafic()<br/>
+	  {<br/>
+	  for (int i = 0; i &lt; 5; i++)<br/>
+	  {<br/>
+	  for (int j = 0; j &lt; 4; j++)<br/>
+	  {<br/>
+	  if (config_trafic[4-i][j] == 1) config_trafic[5-i][j] = 1;<br/>
+	  else config_trafic[5-i][j] = 0;<br/>
+	  }<br/>
+	  }<br/>
+	  for (int i = 0; i &lt; 4; i++) <br/>
+	  if (random(1) &gt;= 0.3) {  <br/>
+	  config_trafic[0][i] = 0;<br/>
+	  } else {<br/>
+	  config_trafic[0][i] = 1;<br/>
+	  }<br/>
+	  }<br/><br/>
+	  
+	  void keyPressed()<br/>
+	  {<br/>
+	  if (keyCode == RIGHT) {<br/>
+	  if ((position_taxi &lt; 6) && !accident) {<br/>
+	  position_taxi++;<br/>
+	  }<br/>
+	  } else if (keyCode == LEFT) {<br/>
+	  if ((position_taxi &gt; 1) && !accident) {<br/>
+	  position_taxi--;<br/>
+	  }<br/>
+	  }<br/>
+	  }<br/><br/>
+
+	  int colonneEnPosX(int colonne)<br/>
+	  {<br/>
+	  // colonne: de 1 à 6<br/><br/>
+	  
+	  if (colonne == 1)<br/>
+	  return 134/2;<br/>
+	  else if (colonne &gt; 1 && colonne &lt; 6)<br/>
+	  return 134+(colonne-2)*133+133/2;<br/>
+	  else if (colonne == 6)<br/>
+	  return 134+4*133+133/2;<br/>
+	  else<br/>
+	  return 0;<br/>
+	  }<br/><br/>
+
+	  int ligneEnPosY(int ligne)<br/>
+	  {<br/>
+	  // ligne: de 1 à 6<br/><br/>
+	  
+	  return ligne * 120;<br/>
+	  }<br/><br/>
+	  
+	  //**************************************************************************************************<br/>
+	  // FONCTIONS DE DESSIN<br/><br/>
+	  
+	  void effacerTout()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter <br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerGameOver()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerAccident()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerScore()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter	<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerVies()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter	<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerTrafic()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/>	<br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerPersonneSurRive()<br/>
+	  {<br/><br/>
+	  
+	  // A compléter	<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerPersonne(int x, int y, Boolean efface)<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerTaxi(int x, int y, Boolean efface)<br/>
+	  {<br/>
+
+	  // A compléter<br/><br/>
+	  
+	  }<br/><br/>
+
+	  void dessinerVoiture(int x, int y, Boolean efface)<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }
+	</div>
+
+	<h2>Dessin des éléments fixes</h2>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>Les éléments fixes, représentés dans l'image ci-contre, doivent être dessiner une seule fois au lancement du jeu.
+	      Ils sont donc réaliser par la fonction <span class="code_dans_texte">setup</span>.</p>
+
+	    <p><b>Complétez</b> <span class="code_dans_texte">setup</span>, après le commentaire
+	      "<span class="code_dans_texte">// Dessin des éléments fixes</span>", pour:</p>
+
+	    <ul>
+	      <li>Dessiner les lignes avec une épaisseur de 4 pixels.</li>
+	      <li>Dessiner la ligne horizontale à 40 pixels du haut de la fenêtre.</li>
+	      <li>Dessiner la ligne de rive gauche (resp. droite) à 134 pixels du bord gauche (resp. droite) de la fenêtre.</li>
+	      <li>Dessiner les lignes séparant les voix en pointillées, et de sorte que la largeur des voies soit de 133 pixels.</li>
+	    </ul>
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 30vw;" src="images/taxi_3.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<p><b>Ecrivez</b> votre partie du code qui dessine les éléments fixes:</p>
+
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+
+	<h2><a id="partie4"></a>Disposition des éléments mobiles</h2>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>On va maintenant étudier deux fonctions, qui nous servirons dans les parties suivantes.</p>
+	    
+	    <p>Pour calculer le centre d'une des cases, voir ci-contre, pour un élément mobile (voitures, taxi, personne),
+	      il suffit d'utiliser les fonctions <span class="code_dans_texte">colonneEnPosX</span> et
+	      <span class="code_dans_texte">ligneEnPosY</span>.</p>
+
+	    <p><span class="code_dans_texte">colonneEnPosX</span> renvoie la valeur, en pixels, de
+	      la position horizontale du centre de la case dont le numéro de colonne, de 1 à 6 et correspondant au
+	      deuxième nombre d'une des cases ci-contre, est donné en paramètre.</p>
+
+	    <p><span class="code_dans_texte">ligneEnPosY</span> renvoie la valeur, en pixels, de
+	      la position verticale du centre de la case dont le numéro de ligne, de 1 à 6 et correspondant au
+	      premier nombre d'une des cases ci-contre, est donné en paramètre.</p>
+	    
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 30vw;" src="images/taxi_4.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>Pour dessiner un rectangle, de 70 pixels de largeur et 75 pixels de hauteur, situé à la ligne 5 et la colonne 4,
+	      comme ci-contre, il suffit donc d'écrire le code:</p>
+
+	    <div class="code">
+	      rectMode(CENTER);<br/><br/>
+	      rect(colonneEnPosX(4), ligneEnPosY(5), 70, 75);
+	    </div>
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 30vw;" src="images/taxi_5.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<h2>Dessin des voitures et du taxi</h2>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>On va maintenant écrire le code des fonctions qui dessinent les voitures, et le taxi ...</p>
+
+	    <p>Comme le développement d'un jeu vidéo peut prendre du temps:</p>
+	    <ul>
+	      <li>7 ans, de 2003 à 2010, pour StarCraft II.</li>
+	      <li>8 ans, de 2000 à 2008, pour Spore.</li>
+	      <li>9 ans, de 2007 à 2016, pour The Last Guardian.</li>
+	      <li>11 ans, de 2001 à 2012, pour Diablo III.</li>
+	      <li>15 ans, de 1996 à 2011, pour Duke Nukem Forever.</li>
+	    </ul>
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 30vw;" src="images/taxi_6.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>nous nous contenterons, voir ci-contre, d'un design simple.</p>
+
+	    <p>On remarque que le taxi ressemble, hormis le panneau de toit qui sert à indiquer la
+	      présence d'un passager, à une voiture.</p>
+
+	    <p>On va donc commencer par écrire, dans une première fonction, le code qui dessine la voiture, et on
+	      l'utilisera, dans une deuxième fonction, pour dessiner le taxi. </p>
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 20vw;" src="images/taxi_7.jpg" alt=""><br/>Une voiture (à gauche) et
+	      le taxi (à droite).<br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<h3>La fonction <span class="code_dans_texte">dessinerVoiture</span></h3>
+
+	<p>Le code, incomplet, de cette fonction est:</p>
+
+	<div class="code">
+	  void dessinerVoiture(int x, int y, Boolean efface)<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }
+	</div>
+
+	<p>Les trois paramètres sont:</p>
+
+	<ul>
+	  <li>x: coordonnée horizontale du centre du dessin.</li>
+	  <li>y: coordonnée verticale du centre du dessin.</li>
+	  <li>efface: qui est à <span class="code_dans_texte">true</span> si on veut éffacer (dessiner en
+	    blanc sur fond blanc), et <span class="code_dans_texte">false</span> si on veut afficher (dessiner en noir
+	    sur fond blanc).</li>
+	</ul>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerVoiture</span> qui doit:</p>
+
+	<ul>
+	  <li>Dessiner les traits et contours avec une épaisseur de 2 pixels.</li>
+	  <li>Dessiner la voiture avec une largeur maximale de 74 pixels, et une hauteur maximale de 80 pixels.</li>
+	  <li>Gérer, en utilisant le paramètre <span class="code_dans_texte">affichage</span>, l'affichage de la voiture ou
+	    son effacement.</li>
+	</ul>
+
+	<p><b>Testez</b> votre fonction <span class="code_dans_texte">dessinerVoiture</span>, en utilisant
+	  <span class="code_dans_texte">colonneEnPosX</span> et <span class="code_dans_texte">ligneEnPosY</span>
+	  (<a href="#partie4">disposition des éléments mobiles dans le jeu</a>), pour afficher des voitures
+	  dans le jeu.</p>
+
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerVoiture</span>:</p>
+
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+
+	<h3>La fonction <span class="code_dans_texte">dessinerTrafic</span></h3>
+
+	<p>La variable globale <span class="code_dans_texte">config_trafic</span>, gérer par une fonction déjà programmer,
+	  est un tableau dont les éléments sont des nombres entiers, et qui a pour dimensions: 6 lignes et 4 colonnes.
+	  Les lignes, de 1 à 6, du tableau correspondent aux lignes, de 1 à 6, des cases des éléments mobiles du jeu 
+	  (<a href="#partie4">disposition des éléments mobiles dans le jeu</a>), et les colonnes, de 1 à 4,
+	  du tableau correspondent aux colonnes, de 2 à 5, des cases des éléments mobiles. Les éléments du tableau
+	  peuvent contenir les valeurs 0 ou 1. Quand un des éléments du tableau est à 1, il doit y avoir une voiture,
+	  afficher dans le jeu, dans la case des éléments mobiles correspondante.</p>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerTrafic</span>, avec deux boulces imbriquées, pour
+	  parcourir tous les éléments de <span class="code_dans_texte">config_trafic</span>, et afficher une voiture dans
+	  le jeu, avec <span class="code_dans_texte">dessinerVoiture</span>, quand cela est nécessaire.</p>
+
+	<p><b>Complétez</b> la fonction <span class="code_dans_texte">effacerTout</span>, pour effacer toutes les voitures
+	  dans les cases, des éléments mobiles du jeu, des colonnes de 2 à 5.</p>
+
+	<p><b>Testez</b> le jeu, et vérifier que les voitures à éviter s'affichent correctement.</p>
+
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerTrafic</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+	  
+
+	<h3>La fonction <span class="code_dans_texte">dessinerTaxi</span></h3>
+
+	<p>Le code, incomplet, de cette fonction est:</p>
+
+	<div class="code">
+	  void dessinerTaxi(int x, int y, Boolean efface)<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }
+	</div>
+
+	<p>Les trois paramètres sont:</p>
+
+	<ul>
+	  <li>x: coordonnée horizontale du centre du dessin.</li>
+	  <li>y: coordonnée verticale du centre du dessin.</li>
+	  <li>efface: qui est à <span class="code_dans_texte">true</span> si on veut éffacer (dessiner en
+	    blanc sur fond blanc), et <span class="code_dans_texte">false</span> si on veut afficher (dessiner en noir
+	    sur fond blanc).</li>
+	</ul>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerTaxi</span>:</p>
+
+	<ul>
+	  <li>Pour dessiner une voiture, en utilisant <span class="code_dans_texte">dessinerVoiture</span>,
+	    avec, à l'intérieur, un rectangle centré et de couleur:</li>
+	  <p><ul>
+	    <li>rouge si la variable globale <span class="code_dans_texte">taxi_complet</span> est à 
+	      <span class="code_dans_texte">true</span>,</li>
+	    <li>et vert dans le cas contraire.</li>
+	  </ul></p>
+	  <li>Gérer, en utilisant le paramètre <span class="code_dans_texte">affichage</span>, l'affichage du taxi ou
+	    son effacement.</li>
+	</ul>
+
+	<p><b>Complétez</b> la fonction <span class="code_dans_texte">effacerTout</span> pour qu'elle efface le taxi
+	  à toutes les positions (<a href="#partie4">disposition des éléments mobiles dans le jeu</a>) de la ligne 6.</p>
+	
+	<p><b>Testez</b> le jeu, et vérifier que le taxi se déplace selon les flèches,
+	  gauche ou droite, du clavier.</p>
+
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerTaxi</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+	
+	<h2>Dessin de la personne appelant le taxi</h2>
+	
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>On va maintenant s'intéresser au dessin de la personne qui appelle le taxi, et, pour cela, on va écrire deux
+	      nouvelles fonctions.</p>
+	    
+	    <p>Comme la personne peut se trouver seulement sur une des deux, gauche ou droite, rives, on va écrire une première
+	      fonction pour dessiner, à une position quelconque, une personne, et une deuxième fonction pour dessiner la personne 
+	      sur une des deux rives. Cela nous permet de ne pas réécrire, deux fois, le code qui dessine la personne, et donc de ne
+	      pas faire grossir inutilement la taille de notre programme.</p>
+	    
+	    <p>On remarque d'ailleurs que la capacité mémoire des consoles de jeux a toujours augmentée:</p>
+	    
+	    <ul>
+	      <!--<li>1 MB pour la PlayStation de 1995,</li>
+		  <li>4 MB pour la Super Nintendo Entertainment System de 1991,</li>
+	      <li>5 MB pour la Sega Genesis de 1989,</li>
+	      <li>6 MB pour la Atari Jaguar de 1994,</li>-->
+	      <li>16 MB pour la Nintendo GamCcube de 2001,</li>
+	      <li>64 MB pour la Nintendo 64 de 1992,</li>
+	      <li>111.5 MB pour la Atari 5200 de 1982,</li>
+	      <li>6 GB pour la XBOX de 2001,</li>
+	      <li>320 GB pour la XBox 360 de 2005,</li>
+	      <li>500 GB pour la PlayStation 3 de 2006, ainsi que la XBox One et la PlayStation 4 de 2013.</li>
+	    </ul>
+	    
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 25vw;" src="images/taxi_8.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>Un exemple, ci-contre, de design pour le dessin de la personne qui appelle le taxi.</p>
+	    
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 7vw;" src="images/taxi_9.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+	
+	<h3>La fonction <span class="code_dans_texte">dessinerPersonne</span></h3>
+
+	<p>Le code, incomplet, de cette fonction est:</p>
+
+	<div class="code">
+	  void dessinerPersonne(int x, int y, Boolean efface)<br/>
+	  {<br/><br/>
+	  
+	  // A compléter<br/><br/>
+	  
+	  }
+	</div>
+
+	<p>Les trois paramètres sont:</p>
+
+	<ul>
+	  <li>x: coordonnée horizontale du centre du dessin.</li>
+	  <li>y: coordonnée verticale du centre du dessin.</li>
+	  <li>efface: qui est à <span class="code_dans_texte">true</span> si on veut éffacer (dessiner en
+	    blanc sur fond blanc), et <span class="code_dans_texte">false</span> si on veut afficher (dessiner en noir
+	    sur fond blanc).</li>
+	</ul>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerPersonne</span> qui doit:</p>
+
+	<ul>
+	  <li>Dessiner les traits et contours avec une épaisseur de 2 pixels.</li>
+	  <li>Dessiner une personne avec une largeur maximale de 32 pixels, et une hauteur maximale de 70 pixels.</li>
+	  <li>Gérer, en utilisant le paramètre <span class="code_dans_texte">affichage</span>, l'affichage de la personne ou
+	    son effacement.</li>
+	</ul>
+
+	<p><b>Testez</b> votre fonction <span class="code_dans_texte">dessinerPersonne</span>, en utilisant
+	  <span class="code_dans_texte">colonneEnPosX</span> et <span class="code_dans_texte">ligneEnPosY</span>
+	  (<a href="#partie4">disposition des éléments mobiles dans le jeu</a>), pour afficher des personnes dans
+	  le jeu.</p>
+
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerPersonne</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+
+	<h3>La fonction <span class="code_dans_texte">dessinerPersonneSurRive</span></h3>
+
+	<p>On va simplifier le problème de la personne qui appelle le taxi. Au début du jeu, une personne
+	  attend sur la rive gauche. Quand la personne monte dans le taxi, la rive devient vacante.
+	  A sa déscente, sur la rive opposée, une nouvelle personne vient attendre là où se trouve le taxi.
+	  Ce scénario se répète indéfiniment.</p>
+
+	<p>La variable globale <span class="code_dans_texte">taxi_complet</span>, gérer par une fonction déjà programmer,
+	  est à <span class="code_dans_texte">true</span> quand il y a quelqu'un dans le taxi, et
+	  <span class="code_dans_texte">false</span> dans le cas contraire.</p>
+
+	<p>La variable globale <span class="code_dans_texte">passager_a_gauche</span>, gérer par une fonction déjà programmer,
+	  est à <span class="code_dans_texte">true</span> quand il faut dessiner la personne sur la
+	  rive gauche, et <span class="code_dans_texte">false</span> dans le cas contraire.</p>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerPersonneSurRive</span>:</p>
+
+	<ul>
+	  <li>Ecrire l'équation logique, en utilisant les variables globales <span class="code_dans_texte">taxi_complet</span> et
+	    <span class="code_dans_texte">passager_a_gauche</span>, pour savoir quand et où dessiner la personne.</li>
+	  <li>Utiliser l'équation logique dans une structure conditionnelle pour traiter les deux cas.</li>
+	  <li>Utiliser <span class="code_dans_texte">dessinerPersonne</span> pour le dessin.</li>
+	</ul>
+
+	
+	<p><b>Complétez</b> la fonction <span class="code_dans_texte">effacerTout</span> pour qu'elle efface les
+	  personnes sur les deux rives, soit aux cases (<a href="#partie4">disposition des éléments mobiles
+	  dans le jeu</a>) situées ligne 5 colonne 1, et ligne 5 colonne 6.</p>
+	  
+	<p><b>Testez</b> le jeu, et vérifier que la personne qui appelle le taxi s'affiche correctement.</p>
+	
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerPersonneSurRive</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+	
+	<h2>Affichage des informations</h2>
+	
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>On va, pour terminer le jeu, programmer les fonctions permettant d'afficher:</p>
+	    <ul>
+	      <li>Le nombre de vies restantes.</li>
+	      <li>Le score du joueur.</li>
+	      <li>Un message signalant une collision entre le taxi et une voiture.</li>
+	      <li>Un message signalant la fin de la partie.</li>
+	    </ul>
+	    <p>Il faut afficher ces informations dans la zone située entre le bord supérieur de la fenêtre
+	      et la ligne horizontale.</p>
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 25vw;" src="images/game_over.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<h3>La fonction <span class="code_dans_texte">dessinerVies</span></h3>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerVies</span>, pour afficher, en utilisant la
+	  fonction <span class="code_dans_texte">text</span> (voir sur internet), le texte "vies: " et, à la suite,
+	  le contenu de la variable <span class="code_dans_texte">vies</span>, avec:</p>
+
+	<ul>
+	  <li>Une taille de 20 pixels pour la police.</li>
+	  <li>Une couleur noire.</li>
+	  <li>Une position, en pixels, de (x,y)=(8, 28).</li>
+	</ul>
+
+	<p><b>Complétez</b> la fonction <span class="code_dans_texte">effacerTout</span> pour effacer, en dessinant
+	  un rectangle avec une couleur de remplissage blanche, la zone d'affichage des informations.</p>
+
+	<p><b>Testez</b> le jeu, et vérifier que le nombre de vies s'affiche correctement.</p>
+	
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerVies</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+	
+	<h3>La fonction <span class="code_dans_texte">dessinerScore</span></h3>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerScore</span>, pour afficher le texte "score: " et,
+	  à la suite, le contenu de la variable <span class="code_dans_texte">score</span>, avec:</p>
+
+	<ul>
+	  <li>Une taille de 20 pixels pour la police.</li>
+	  <li>Une couleur noire.</li>
+	  <li>Une position, en pixels, de (x,y)=(640, 28).</li>
+	</ul>
+
+	<p><b>Testez</b> le jeu, et vérifier que le score s'affiche correctement.</p>
+	
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerScore</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+
+	<h3>La fonction <span class="code_dans_texte">dessinerAccident</span></h3>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerAccident</span>, pour afficher
+	  le texte "ACCIDENT !", avec:</p>
+
+	<ul>
+	  <li>Une taille de 20 pixels pour la police.</li>
+	  <li>Une couleur rouge.</li>
+	  <li>Une position, en pixels, de (x,y)=(320, 28).</li>
+	</ul>
+
+	<p><b>Testez</b> le jeu, et vérifier que le message en cas de collision, entre le taxi et une voiture,
+	  s'affiche correctement.</p>
+	
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerAccident</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+
+	<h3>La fonction <span class="code_dans_texte">dessinerGameOver</span></h3>
+
+	<p><b>Complétez</b> <span class="code_dans_texte">dessinerGameOver</span>, pour afficher
+	  le texte "Game Over !", avec:</p>
+
+	<ul>
+	  <li>Une taille de 20 pixels pour la police.</li>
+	  <li>Une couleur rouge.</li>
+	  <li>Une position, en pixels, de (x,y)=(320, 28).</li>
+	</ul>
+
+	<p><b>Testez</b> le jeu, et vérifier que le message signalant la fin de la partie
+	  s'affiche correctement.</p>
+	
+	<p><b>Ecrivez</b> le code de votre fonction <span class="code_dans_texte">dessinerGameOver</span>:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+	
+	<h2>Améliorations</h2>
+	
+	<div class="double_5050">
+	  <div class="colonne_gauche">
+	    <p>Les possibilités d'améliorations sont vastes:</p>
+
+	    <ul>
+	      <li>Ajouter un menu pour relancer une partie ou quitter le jeu.</li>
+	      <li>Mettre différents niveaux de difficulté.</li>
+	      <li>etc ...</li>
+	    </ul>
+	    
+	  </div>
+	  <div class="colonne_droite">
+	    <div class="image_centree"><img style="max-width: 25vw;" src="images/renault_taxi.jpg" alt=""><br/><br/> 
+	    </div>
+	  </div>
+	</div>
+
+	<p><b>Proposez</b> des idées pour améliorer le jeu vidéo taxi:</p>
+	
+	<textarea id="" onFocus=""
+		  onChange=""
+		  cols="100" maxlength="3000" rows="20"
+		  wrap="hard" placeholder="Ecrivez votre réponse ici."></textarea>
+	
+	<p><br/><br/></p>
+
+	<p style="text-align: right;">(cc) j. ahmad - Education Nationale - 2020</p>
+
+      </div> <!-- justifie -->
+      
+    </div> <!-- contenu -->
+    
+  </body>
+</html>
